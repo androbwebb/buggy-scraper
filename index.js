@@ -1,3 +1,4 @@
+const fs = require('fs');
 const axios = require('axios');
 const cheerio = require('cheerio');
 const bluebird = require('bluebird');
@@ -26,12 +27,14 @@ const scrapeProductData = async (baseUrl) => {
 
         await bluebird.map(productElements, async (element, index) => {
             const title = $(element).find('.text-xl.truncate').text();
+            const productId = $(element).attr('data-product-id');
             const slug = title.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
             const productUrl = `${baseUrl}items/${slug}.html`;
             const image = $(element).find('img').attr('src');
 
             let description = $(element).find('.text-gray-700.text-base').text().trim();
-            let price = $(element).find('.price').text().replace('$', '');
+            let price = parseFloat($(element).find('.price').text().replace(/[^\d.]/g, ''));
+            let currency = 'USD';
             let tags = $(element).find('.tags span').map((index, element) => $(element).text()).get();
             let weight = null;
             let reviewCount = null;
@@ -42,13 +45,14 @@ const scrapeProductData = async (baseUrl) => {
                 const productPageContent = await fetchPageFromCache(productUrl);
                 const p$ = cheerio.load(productPageContent);
 
-                // Try to get more specific data:
-                price = p$('head').find('meta[property="og:price:amount"]').attr('content');
-                weight = p$('.weight').text().replace('Weight: ', '');
+                // If the product page loaded, get the more specific data:
+                price = parseFloat(p$('.price').text().replace(/[^\d.]/g, ''));
+                currency = p$('head').find('meta[property="og:price:currency"]').attr('content');
+                weight = p$('.weight').text().replace(/[^\d.]/g, '');
                 reviewCount = p$('.reviews .review').length;
                 const totalStars = p$('.reviews .review').map((index, element) => {
                     return Number(p$(element).attr('data-stars'));
-                }).get().filter((a) => a !== undefined).reduce((a, b) => a + b, 0);
+                }).get().filter((a) => a !== undefined).reduce((a, b) => a + b, null);
                 averageStars = totalStars / reviewCount;
 
             } catch (error) {
@@ -56,9 +60,9 @@ const scrapeProductData = async (baseUrl) => {
                 return;
             }
 
-            products.push({ productUrl, title, price, image, description, weight, tags, reviewCount, averageStars });
-        }, { concurrency: 5 });
-        
+            products.push({ productUrl, productId, title, price, image, description, weight, tags, reviewCount, averageStars, currency });
+        });
+
     } catch (error) {
         console.error(`Error: ${error}`);
     }
@@ -66,5 +70,8 @@ const scrapeProductData = async (baseUrl) => {
     return products;
 };
 
-// Usage:
-scrapeProductData('https://bad-scrapper-3eac18dceb0d.herokuapp.com/').then(products => console.log(products));
+scrapeProductData('https://bad-scrapper-3eac18dceb0d.herokuapp.com/').then(products => {
+    // You can check the returned products here.
+});
+
+

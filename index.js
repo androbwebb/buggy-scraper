@@ -73,7 +73,7 @@ const scrapeProductData = async (baseUrl) => {
 
 scrapeProductData('https://bad-scrapper-3eac18dceb0d.herokuapp.com/').then(products => {
     // You can check the returned products here.
-    printTable(products);
+    printTable(products, {color: 'red'});
 });
 
 

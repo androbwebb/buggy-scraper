@@ -2,7 +2,7 @@ const fs = require('fs');
 const axios = require('axios');
 const cheerio = require('cheerio');
 const bluebird = require('bluebird');
-const { printTable } = require('console-table-printer');
+require('console.table');
 
 const PAGE_CACHE = {};
 
@@ -73,7 +73,7 @@ const scrapeProductData = async (baseUrl) => {
 
 scrapeProductData('https://bad-scrapper-3eac18dceb0d.herokuapp.com/').then(products => {
     // You can check the returned products here.
-    printTable(products, {color: 'red'});
+    console.table(products);
 });
 
 

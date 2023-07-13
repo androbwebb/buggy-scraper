@@ -8,5 +8,5 @@ npm install
 
 ## You can run this with
 ```
-npx ts-node ./index.ts
+npx ts-node ./index.js
 ```
